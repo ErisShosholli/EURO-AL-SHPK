@@ -82,6 +82,25 @@ Open the website in your browser:
 http://localhost:3000
 ```
 
+## Email Delivery Setup
+
+The contact form submits to a Next.js API route at `/api/contact` and sends email through Resend.
+
+Create a local `.env.local` file:
+
+```bash
+RESEND_API_KEY=your_resend_api_key
+CONTACT_TO_EMAIL=euro-al@outlook.com
+CONTACT_FROM_EMAIL=EURO AL-SHPK <noreply@yourdomain.com>
+```
+
+Important:
+
+- `RESEND_API_KEY` is required for the form to send automatically.
+- `CONTACT_TO_EMAIL` is the inbox that receives website requests.
+- `CONTACT_FROM_EMAIL` should use a verified Resend domain in production.
+- Without these environment variables, the form will show a clear configuration error instead of silently pretending the email was sent.
+
 ## Available Scripts
 
 Run local development:

@@ -5,7 +5,7 @@ dist/
 build/
 .env*
 !.env.example
-.codex-dev-server*.log
+.codex-*-server*.log
 artifacts/
 pnpm-debug.log*
 npm-debug.log*

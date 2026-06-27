@@ -8,21 +8,52 @@ import { SectionHeading } from "./section-heading";
 
 export function ContactSection() {
   const [status, setStatus] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error">("success");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const name = String(formData.get("name") || "");
     const email = String(formData.get("email") || "");
     const phone = String(formData.get("phone") || "");
     const message = String(formData.get("message") || "");
-    const subject = encodeURIComponent(`Kërkesë për ofertë nga ${name}`);
-    const body = encodeURIComponent(
-      `Emri: ${name}\nEmail: ${email}\nTelefoni: ${phone}\n\nMesazhi:\n${message}`
-    );
+    const website = String(formData.get("website") || "");
 
-    window.location.href = `${company.emailHref}?subject=${subject}&body=${body}`;
-    setStatus("Kërkesa u përgatit në email-in tuaj.");
+    setIsSubmitting(true);
+    setStatus("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, phone, message, website })
+      });
+
+      const result = (await response.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Email-i nuk mund të dërgohej.");
+      }
+
+      setStatusType("success");
+      setStatus(result?.message || "Kërkesa u dërgua me sukses.");
+      form.reset();
+    } catch (error) {
+      setStatusType("error");
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Email-i nuk mund të dërgohej. Ju lutemi provoni përsëri."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -41,6 +72,14 @@ export function ContactSection() {
         <div className="mt-14 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <Reveal>
             <form onSubmit={onSubmit} className="glass-panel rounded-lg p-6 md:p-8">
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                className="hidden"
+                aria-hidden="true"
+              />
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-bold text-slate-200">
                   Emri
@@ -86,12 +125,23 @@ export function ContactSection() {
               </label>
               <button
                 type="submit"
-                className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gold px-6 text-sm font-black text-graphite shadow-gold transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-graphite sm:w-auto"
+                disabled={isSubmitting}
+                className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gold px-6 text-sm font-black text-graphite shadow-gold transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-graphite disabled:cursor-not-allowed disabled:opacity-65 sm:w-auto"
               >
-                Dërgo Kërkesën
+                {isSubmitting ? "Duke dërguar..." : "Dërgo Kërkesën"}
                 <Send className="h-4 w-4" aria-hidden="true" />
               </button>
-              {status ? <p className="mt-4 text-sm font-semibold text-gold">{status}</p> : null}
+              {status ? (
+                <p
+                  className={`mt-4 text-sm font-semibold ${
+                    statusType === "success" ? "text-gold" : "text-red-300"
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {status}
+                </p>
+              ) : null}
             </form>
           </Reveal>
 
